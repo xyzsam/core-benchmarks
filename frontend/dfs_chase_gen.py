@@ -1,14 +1,10 @@
 """Generates an instruction pointer-chase benchmark."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import random
-
 import cfg_pb2, common
 
 MODULE_NAME = 'dfs_chase_gen'
+
 
 def register_args(parser):
   subparser = parser.add_parser(MODULE_NAME)
@@ -16,13 +12,6 @@ def register_args(parser):
                          help='Depth of the function call tree.')
   subparser.add_argument('--branch_probability', default=0.5, type=float,
                          help='Branch taken probability.')
-
-
-def _PopRandomFunction(function_list):
-  if not function_list:
-    raise IndexError('in _PopRandomFunction: list of functions is empty')
-  idx = int(random.random() * len(function_list))
-  return function_list.pop(idx)
 
 
 class DFSChaseGenerator(common.BaseGenerator):
@@ -47,43 +36,44 @@ class DFSChaseGenerator(common.BaseGenerator):
         'int w = z*z + x - y;\n'
     )
 
+  def _AddCodeBlockWithBranch(self, branch_type, target=None, probability=None):
+    """Add an empty code block with the specified terminator branch."""
+    block = self._AddCodeBlock()
+    block.terminator_branch.type = branch_type
+    if target:
+      block.terminator_branch.targets.append(target)
+    if probability:
+      block.terminator_branch.taken_probability.append(probability)
+    return block
+
   def _GenerateConditionalBranchCodeBlocks(self, call_targets, probability):
     if len(call_targets) != 2:
       raise ValueError(
           "call_targets must have length 2, got %d" % len(call_targets))
 
     # Conditional branch taken path.
-    taken_block = self._AddCodeBlock()
-    taken_block.terminator_branch.type = cfg_pb2.Branch.BranchType.DIRECT_CALL
-    taken_block.terminator_branch.targets.append(call_targets[0])
-    taken_block.terminator_branch.taken_probability.append(1)
-
-    taken_block_ret = self._AddCodeBlock()
-    taken_block_ret.terminator_branch.type = cfg_pb2.Branch.BranchType.RETURN
+    taken_block = self._AddCodeBlockWithBranch(
+        cfg_pb2.Branch.BranchType.DIRECT_CALL, call_targets[0], 1)
+    taken_block_ret = self._AddCodeBlockWithBranch(
+        cfg_pb2.Branch.BranchType.RETURN)
 
     # Fallthrough block.
-    ft_block = self._AddCodeBlock()
-    ft_block.terminator_branch.type = cfg_pb2.Branch.BranchType.DIRECT_CALL
-    ft_block.terminator_branch.targets.append(call_targets[1])
-    ft_block.terminator_branch.taken_probability.append(1)
+    ft_block = self._AddCodeBlockWithBranch(
+        cfg_pb2.Branch.BranchType.DIRECT_CALL, call_targets[1], 1)
+    ft_block_ret = self._AddCodeBlockWithBranch(
+        cfg_pb2.Branch.BranchType.RETURN)
 
-    ft_block_ret = self._AddCodeBlock()
-    ft_block_ret.terminator_branch.type = cfg_pb2.Branch.BranchType.RETURN
-
-    codeblock = self._AddCodeBlock()
-    codeblock.terminator_branch.type = cfg_pb2.Branch.BranchType.CONDITIONAL_DIRECT
-    codeblock.terminator_branch.targets.append(taken_block.id)
-    codeblock.terminator_branch.taken_probability.append(probability)
+    cond_block = self._AddCodeBlockWithBranch(
+        cfg_pb2.Branch.BranchType.CONDITIONAL_DIRECT, taken_block.id,
+        probability)
 
     # Fallthrough must come right after the conditional branch.
-    return [codeblock, ft_block, ft_block_ret, taken_block, taken_block_ret]
-
+    return [cond_block, ft_block, ft_block_ret, taken_block, taken_block_ret]
 
   def _GenerateLeafFunctionCodeBlocks(self):
     codeblock = self._AddCodeBlock()
     codeblock.terminator_branch.type = cfg_pb2.Branch.BranchType.RETURN
     return codeblock
-
 
   def _GenerateFunctionTree(self):
     next_id = common.IDGenerator.Next()
@@ -98,12 +88,11 @@ class DFSChaseGenerator(common.BaseGenerator):
       # The callees of the second-to-last level in the tree are the leaf nodes.
       self._leaf_functions = children
 
-
   def _GenerateFunctions(self):
-    self._AddFunction(self._root_func)
+    self._AddFunctionWithId(self._root_func)
     for caller, callees in self._function_tree.items():
       for callee in callees:
-        self._AddFunction(callee)
+        self._AddFunctionWithId(callee)
       self._functions[caller].instructions.extend(
           self._GenerateConditionalBranchCodeBlocks(
               callees, self._branch_probability))
@@ -111,7 +100,6 @@ class DFSChaseGenerator(common.BaseGenerator):
     for leaf in self._leaf_functions:
       self._functions[leaf].instructions.append(
           self._GenerateLeafFunctionCodeBlocks())
-
 
   def GenerateCFG(self):
     self._GenerateFunctionTree()

@@ -1,11 +1,6 @@
 """Generates an instruction pointer-chase benchmark."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import random
-
 import cfg_pb2, common
 
 MODULE_NAME = 'inst_pointer_chase_gen'
@@ -18,15 +13,10 @@ def register_args(parser):
                          help='Number of distinct callchains.')
 
 
-def _PopRandomFunction(function_list):
-  if not function_list:
-    raise IndexError('in _PopRandomFunction: list of functions is empty')
-  idx = int(random.random() * len(function_list))
-  return function_list.pop(idx)
-
 # Indicates in the caller-to-callee mapping that a function does not call any
 # other function.
 NO_CALLEE = -1
+
 
 class InstPointerChaseGenerator(common.BaseGenerator):
   """Generates an instruction pointer chase benchmark."""
@@ -39,7 +29,7 @@ class InstPointerChaseGenerator(common.BaseGenerator):
     self._callchain_entry_functions = []
     self._entry_function_id = None
     if function_selector is None:
-      self._function_selector = _PopRandomFunction
+      self._function_selector = common.PopRandomElement
     else:
       self._function_selector = function_selector
     self._function_body = self._AddCodeBlockBody(
@@ -48,7 +38,6 @@ class InstPointerChaseGenerator(common.BaseGenerator):
         'int z = y*x + 12345;\n'
         'int w = z*z + x - y;\n'
     )
-
 
   def _GenerateCallchainMappings(self):
     num_functions = self._num_callchains * self._depth
@@ -68,19 +57,18 @@ class InstPointerChaseGenerator(common.BaseGenerator):
            'There should be exactly one caller2callee mapping for every '
            'function.')
 
-
   def _GenerateCallchainFunctions(self):
     # First, generate codeblocks. Each function has two: the main body, with a
     # fallthrough branch, and the call, with a return terminator branch.
 
     for caller, callee in self._caller2callee.items():
-      function = self._AddFunction(caller)
+      function = self._AddFunctionWithId(caller)
       main_body = self._AddCodeBlock()
       main_body.code_block_body_id = self._function_body.id
       main_body.terminator_branch.type = cfg_pb2.Branch.BranchType.FALLTHROUGH
       function.instructions.append(main_body)
 
-      if not callee == NO_CALLEE:
+      if callee != NO_CALLEE:
         call_block = self._AddCodeBlock()
         # Leave the branch target unspecified for now.
         call_block.terminator_branch.type = (
@@ -91,9 +79,8 @@ class InstPointerChaseGenerator(common.BaseGenerator):
         # another CodeBlock.
         function.instructions.append(call_block)
 
-
   def _GenerateEntryFunction(self):
-    entry_func = self._AddFunction(common.IDGenerator.Next())
+    entry_func = self._AddFunctionWithId(common.IDGenerator.Next())
     for callchain_start in self._callchain_entry_functions:
       # Get the first CodeBlock of the called function.
       called_func = self._functions[callchain_start]
@@ -105,7 +92,6 @@ class InstPointerChaseGenerator(common.BaseGenerator):
       code_block.terminator_branch.taken_probability.append(1)
       entry_func.instructions.append(code_block)
     self._entry_function_id = entry_func.id;
-
 
   def GenerateCFG(self):
     self._GenerateCallchainMappings()

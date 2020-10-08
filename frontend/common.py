@@ -1,5 +1,6 @@
 """Common classes for generating benchmarks."""
 
+import random
 import cfg_pb2
 
 class IDGenerator(object):
@@ -10,6 +11,14 @@ class IDGenerator(object):
     """Get the next ID."""
     IDGenerator.next_id += 1
     return IDGenerator.next_id
+
+
+def PopRandomElement(somelistl):
+  """Pop off a random element from the list."""
+  if not somelist:
+    raise IndexError('PopRandomFunction: list is empty')
+  idx = int(random.random() * len(somelist))
+  return somelist.pop(idx)
 
 
 class BaseGenerator(object):
@@ -23,25 +32,21 @@ class BaseGenerator(object):
     # Map from function ID to the function proto.
     self._functions = {}
 
-
   def _AddCodeBlockBody(self, code):
     id = IDGenerator.Next()
     self._code_block_bodies[id] = cfg_pb2.CodeBlockBody(
         id=id, instructions=code)
     return self._code_block_bodies[id]
 
-
   def _AddCodeBlock(self):
     id = IDGenerator.Next()
     self._code_blocks[id] = cfg_pb2.CodeBlock(id=id)
     return self._code_blocks[id]
 
-
   def _FunctionName(self, function_id):
     return 'function_%d' % function_id
 
-
-  def _AddFunction(self, id):
+  def _AddFunctionWithId(self, id):
     if id in self._functions:
       raise KeyError('there already exists a function with id %d' % id)
     self._functions[id] = cfg_pb2.Function(id=id)

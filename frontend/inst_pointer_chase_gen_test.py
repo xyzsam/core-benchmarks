@@ -1,9 +1,5 @@
 """Tests for inst_pointer_chase_gen."""
 
-from __future__ import absolute_import  # Not necessary in a Python 3-only module
-from __future__ import division  # Not necessary in a Python 3-only module
-from __future__ import print_function  # Not necessary in a Python 3-only module
-
 import random
 import unittest
 
@@ -18,7 +14,6 @@ def _PopNextFunction(function_list):
 
 
 class InstPointerChaseGeneratorTest(unittest.TestCase):
-
 
   def setUp(self):
     self.depth = 3
@@ -38,13 +33,10 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
     self.assertEqual(self.gen._caller2callee[5],
                      inst_pointer_chase_gen.NO_CALLEE)
 
-
-  def test_generate_callchain_functions(self):
+  def test_generate_callchain_function_codeblockbodies(self):
     self.gen._GenerateCallchainMappings()
     self.gen._GenerateCallchainFunctions()
     self.assertEqual(len(self.gen._functions), self.depth * self.num_callchains)
-    # Map from a caller function to its callee in the chain.
-    expected_caller2callee = { 0: 1, 1: 2, 3: 4, 4: 5 }
 
     # All functions should use the same main code block body.
     code_block_bodies = set()
@@ -56,6 +48,17 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
                     sig_body.instructions)
       self.assertEqual(func.instructions[0].terminator_branch.type,
                        cfg_pb2.Branch.BranchType.FALLTHROUGH)
+    self.assertEqual(
+        len(code_block_bodies), 1,
+        msg="All functions should share the same main code block body.")
+
+  def test_generate_callchain_function_callees(self):
+    self.gen._GenerateCallchainMappings()
+    self.gen._GenerateCallchainFunctions()
+    # Map from a caller function to its callee in the chain.
+    expected_caller2callee = { 0: 1, 1: 2, 3: 4, 4: 5 }
+
+    for func_id, func in self.gen._functions.items():
       if func_id in expected_caller2callee:
         # This function calls another in a chain.
         self.assertEqual(len(func.instructions), 2)
@@ -73,10 +76,6 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
             func.instructions[1].terminator_branch.taken_probability[0], 1)
       else:
         self.assertEqual(len(func.instructions), 1)
-    self.assertEqual(
-        len(code_block_bodies), 1,
-        msg="All functions should share the same main code block body.")
-
 
   def test_generate_entry_function(self):
     self.gen._GenerateCallchainMappings()
@@ -97,7 +96,6 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
                     self.gen._functions)
       self.assertEqual(
           code_block.terminator_branch.taken_probability[0], 1)
-
 
   def test_generate_cfg(self):
     cfg = self.gen.GenerateCFG()

@@ -1,14 +1,7 @@
 """Tests for dfs_chase_gen."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-import random
 import unittest
-
 import cfg_pb2, dfs_chase_gen
-
 
 class DFSChaseGenTest(unittest.TestCase):
 
@@ -18,9 +11,11 @@ class DFSChaseGenTest(unittest.TestCase):
     self.gen = dfs_chase_gen.DFSChaseGenerator(
         self.depth, self.branch_probability)
 
-
   def test_generate_function_tree(self):
     self.gen._GenerateFunctionTree()
+    # A full binary tree of depth N has 2^n-1 nodes. function_tree only includes
+    # functions that call others, so the leaves in the last layer of the tree
+    # are excluded. Hence the expected number of nodes is 2^(n-1) - 1.
     self.assertEqual(len(self.gen._function_tree), 2**(self.depth-1) - 1)
     for caller, children in self.gen._function_tree.items():
       if children:
@@ -49,7 +44,6 @@ class DFSChaseGenTest(unittest.TestCase):
                      cfg_pb2.Branch.BranchType.RETURN)
     self.assertEqual(ft_block_ret.terminator_branch.type,
                      cfg_pb2.Branch.BranchType.RETURN)
-
 
   def test_generate_functions(self):
     self.gen._GenerateFunctionTree()
