@@ -1,7 +1,7 @@
 """Generates an instruction pointer-chase benchmark."""
 
-import random
-import cfg_pb2, common
+import cfg_pb2
+import common
 
 MODULE_NAME = 'dfs_chase_gen'
 
@@ -86,7 +86,7 @@ class DFSChaseGenerator(common.BaseGenerator):
         next_id = common.IDGenerator.Next()
         self._root_func = next_id
         queue = [next_id]
-        for i in range(0, self._depth - 1):
+        for _ in range(0, self._depth - 1):
             children = []
             for func in queue:
                 self._function_tree[func] = [
@@ -95,7 +95,7 @@ class DFSChaseGenerator(common.BaseGenerator):
                 ]
                 children.extend(self._function_tree[func])
             queue = children
-            # The callees of the second-to-last level in the tree are the leaf nodes.
+            # The callees of the second-to-last level in the tree are leaves.
             self._leaf_functions = children
 
     def _GenerateFunctions(self):

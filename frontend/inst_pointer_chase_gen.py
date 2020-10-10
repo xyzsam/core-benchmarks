@@ -1,7 +1,7 @@
 """Generates an instruction pointer-chase benchmark."""
 
-import random
-import cfg_pb2, common
+import cfg_pb2
+import common
 
 MODULE_NAME = 'inst_pointer_chase_gen'
 
@@ -45,11 +45,11 @@ class InstPointerChaseGenerator(common.BaseGenerator):
     def _GenerateCallchainMappings(self):
         num_functions = self._num_callchains * self._depth
         function_list = list(range(0, num_functions))
-        for c in range(0, self._num_callchains):
+        for _ in range(0, self._num_callchains):
             # Generate a pointer chase. The final function will just return.
             caller = self._function_selector(function_list)
             self._callchain_entry_functions.append(caller)
-            for d in range(0, self._depth - 1):
+            for _ in range(0, self._depth - 1):
                 callee = self._function_selector(function_list)
                 self._caller2callee[caller] = callee
                 caller = callee
@@ -61,14 +61,15 @@ class InstPointerChaseGenerator(common.BaseGenerator):
             'function.')
 
     def _GenerateCallchainFunctions(self):
-        # First, generate codeblocks. Each function has two: the main body, with a
-        # fallthrough branch, and the call, with a return terminator branch.
+        # First, generate codeblocks. Each function has two: the main body, with
+        # a fallthrough branch, and the call, with a return terminator branch.
 
         for caller, callee in self._caller2callee.items():
             function = self._AddFunctionWithId(caller)
             main_body = self._AddCodeBlock()
             main_body.code_block_body_id = self._function_body.id
-            main_body.terminator_branch.type = cfg_pb2.Branch.BranchType.FALLTHROUGH
+            main_body.terminator_branch.type = \
+                cfg_pb2.Branch.BranchType.FALLTHROUGH
             function.instructions.append(main_body)
 
             if callee != NO_CALLEE:
@@ -78,8 +79,8 @@ class InstPointerChaseGenerator(common.BaseGenerator):
                     cfg_pb2.Branch.BranchType.DIRECT_CALL)
                 call_block.terminator_branch.targets.append(callee)
                 call_block.terminator_branch.taken_probability.append(1)
-                # The end of a function in C will implicitly return, no need to create
-                # another CodeBlock.
+                # The end of a function in C will implicitly return, no need to
+                # create another CodeBlock.
                 function.instructions.append(call_block)
 
     def _GenerateEntryFunction(self):
@@ -90,7 +91,8 @@ class InstPointerChaseGenerator(common.BaseGenerator):
             # Create a CodeBlock that just calls this function (the start of a
             # callchain), no additional CodeBlockBody required.
             code_block = self._AddCodeBlock()
-            code_block.terminator_branch.type = cfg_pb2.Branch.BranchType.DIRECT_CALL
+            code_block.terminator_branch.type = \
+                cfg_pb2.Branch.BranchType.DIRECT_CALL
             code_block.terminator_branch.targets.append(called_func.id)
             code_block.terminator_branch.taken_probability.append(1)
             entry_func.instructions.append(code_block)

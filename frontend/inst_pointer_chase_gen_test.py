@@ -1,9 +1,11 @@
 """Tests for inst_pointer_chase_gen."""
+# Access to protected class members is common for unit tests.
+# pylint: disable=protected-access
 
-import random
 import unittest
 
-import inst_pointer_chase_gen, cfg_pb2
+import cfg_pb2
+import inst_pointer_chase_gen
 
 
 def _PopNextFunction(function_list):

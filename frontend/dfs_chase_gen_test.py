@@ -1,7 +1,10 @@
 """Tests for dfs_chase_gen."""
+# Access to protected class members is common for unit tests.
+# pylint: disable=protected-access
 
+import cfg_pb2
+import dfs_chase_gen
 import unittest
-import cfg_pb2, dfs_chase_gen
 
 
 class DFSChaseGenTest(unittest.TestCase):
@@ -14,11 +17,12 @@ class DFSChaseGenTest(unittest.TestCase):
 
     def test_generate_function_tree(self):
         self.gen._GenerateFunctionTree()
-        # A full binary tree of depth N has 2^n-1 nodes. function_tree only includes
-        # functions that call others, so the leaves in the last layer of the tree
-        # are excluded. Hence the expected number of nodes is 2^(n-1) - 1.
+        # A full binary tree of depth N has 2^n-1 nodes. function_tree only
+        # includes functions that call others, so the leaves in the last layer
+        # of the tree are excluded. Hence the expected number of nodes is
+        # 2^(n-1) - 1.
         self.assertEqual(len(self.gen._function_tree), 2**(self.depth - 1) - 1)
-        for caller, children in self.gen._function_tree.items():
+        for children in self.gen._function_tree.values():
             if children:
                 self.assertEqual(len(children), 2)
 
@@ -64,8 +68,8 @@ class DFSChaseGenTest(unittest.TestCase):
         self.assertEqual(len(cfg.functions), len(self.gen._functions))
         for got_func in cfg.functions:
             self.assertEqual(got_func, self.gen._functions[got_func.id])
-        # One codeblockbody per function signature and the shared code block body
-        # for all functions.
+        # One CodeBlockBody per function signature and the shared code block
+        # body for all functions.
         expected_codeblock_bodies = len(self.gen._functions) + 1
         self.assertEqual(len(cfg.code_block_bodies), expected_codeblock_bodies)
 
