@@ -1,4 +1,9 @@
-"""Generates an instruction pointer-chase benchmark."""
+"""Generates a DFS tree-based instruction pointer chase benchmark.
+
+The benchmark consists of a full binary tree of depth D. Each node is a
+conditional branch that calls one child function. This process repeats until we
+reach the leaf.
+"""
 
 import cfg_pb2
 import common
@@ -20,6 +25,7 @@ def register_args(parser):
 
 class DFSChaseGenerator(common.BaseGenerator):
     """Generates a DFS instruction pointer chase benchmark."""
+
     def __init__(self, depth, branch_probability):
         super().__init__()
 
@@ -115,13 +121,8 @@ class DFSChaseGenerator(common.BaseGenerator):
     def generate_cfg(self):
         self._generate_function_tree()
         self._generate_functions()
-        cfg_proto = cfg_pb2.CFG()
-        for func in self._functions.values():
-            cfg_proto.functions.append(func)
-        for cb in self._code_block_bodies.values():
-            cfg_proto.code_block_bodies.append(cb)
-        cfg_proto.entry_point_function = self._root_func
-        return cfg_proto
+        return self._generate_cfg(self._functions, self._code_block_bodies,
+                                  self._root_func)
 
 
 def generate_cfg(args):

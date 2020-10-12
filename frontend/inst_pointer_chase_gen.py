@@ -1,4 +1,10 @@
-"""Generates an instruction pointer-chase benchmark."""
+"""Generates an instruction pointer-chase benchmark.
+
+The benchmark consists of a collection of N callchains of length L.  Each
+function runs a small amount of simple instructions, then calls the next
+function. The function call sequence is designed to look arbitrary. Once this
+callchain completes and unwinds, the function moves on to the next callchain.
+"""
 
 import cfg_pb2
 import common
@@ -103,13 +109,8 @@ class InstPointerChaseGenerator(common.BaseGenerator):
         self._generate_callchain_mappings()
         self._generate_callchain_functions()
         self._generate_entry_function()
-        cfg_proto = cfg_pb2.CFG()
-        for func in self._functions.values():
-            cfg_proto.functions.append(func)
-        for cb in self._code_block_bodies.values():
-            cfg_proto.code_block_bodies.append(cb)
-        cfg_proto.entry_point_function = self._entry_function_id
-        return cfg_proto
+        return self._generate_cfg(self._functions, self._code_block_bodies,
+                                  self._entry_function_id)
 
 
 def generate_cfg(args):

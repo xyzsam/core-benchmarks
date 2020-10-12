@@ -25,6 +25,10 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
             self.num_callchains,
             function_selector=_pop_next_function)
 
+    def _target_branch_for(self, func):
+        """Returns the branch to the intended callee of this function."""
+        return func.instructions[1].terminator_branch
+
     def test_generate_callchain_mappings(self):
         self.gen._generate_callchain_mappings()
         self.assertEqual(self.gen._caller2callee[0], 1)
@@ -45,13 +49,17 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
         # All functions should use the same main code block body.
         code_block_bodies = set()
         for func_id, func in self.gen._functions.items():
-            code_block_bodies.add(func.instructions[0].code_block_body_id)
+            main_code_block = func.instructions[0]
+            code_block_bodies.add(main_code_block.code_block_body_id)
             sig_body = (
                 self.gen._code_block_bodies[func.signature.code_block_body_id])
             self.assertIn(self.gen.function_name(func_id),
                           sig_body.instructions)
-            self.assertEqual(func.instructions[0].terminator_branch.type,
+
+        for func_id, func in self.gen._functions.items():
+            self.assertEqual(main_code_block.terminator_branch.type,
                              cfg_pb2.Branch.BranchType.FALLTHROUGH)
+
         self.assertEqual(
             len(code_block_bodies),
             1,
@@ -67,19 +75,19 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
             if func_id in expected_caller2callee:
                 # This function calls another in a chain.
                 self.assertEqual(len(func.instructions), 2)
-                self.assertEqual(func.instructions[1].terminator_branch.type,
-                                 cfg_pb2.Branch.BranchType.DIRECT_CALL)
+                self.assertEqual(
+                    self._target_branch_for(func).type,
+                    cfg_pb2.Branch.BranchType.DIRECT_CALL)
                 expected_callee_func = (
                     self.gen._functions[expected_caller2callee[func_id]])
                 self.assertEqual(
-                    func.instructions[1].terminator_branch.targets[0],
+                    self._target_branch_for(func).targets[0],
                     expected_callee_func.id,
                     msg="Function %d should call function %d, got %d" %
                     (func_id, expected_callee_func.id,
-                     func.instructions[1].terminator_branch.targets[0]))
+                     self._target_branch_for(func).targets[0]))
                 self.assertEqual(
-                    func.instructions[1].terminator_branch.taken_probability[0],
-                    1)
+                    self._target_branch_for(func).taken_probability[0], 1)
             else:
                 self.assertEqual(len(func.instructions), 1)
 
