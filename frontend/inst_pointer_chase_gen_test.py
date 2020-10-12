@@ -8,10 +8,10 @@ import cfg_pb2
 import inst_pointer_chase_gen
 
 
-def _PopNextFunction(function_list):
+def _pop_next_function(function_list):
     """Pops and returns the next function in the list."""
     if not function_list:
-        raise IndexError("in _PopNextFunction: list of functions is empty")
+        raise IndexError("in _pop_next_function: list of functions is empty")
     return function_list.pop(0)
 
 
@@ -21,10 +21,10 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
         self.depth = 3
         self.num_callchains = 2
         self.gen = inst_pointer_chase_gen.InstPointerChaseGenerator(
-            self.depth, self.num_callchains, function_selector=_PopNextFunction)
+            self.depth, self.num_callchains, function_selector=_pop_next_function)
 
     def test_generate_callchain_mappings(self):
-        self.gen._GenerateCallchainMappings()
+        self.gen._generate_callchain_mappings()
         self.assertEqual(self.gen._caller2callee[0], 1)
         self.assertEqual(self.gen._caller2callee[1], 2)
         self.assertEqual(self.gen._caller2callee[2],
@@ -35,8 +35,8 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
                          inst_pointer_chase_gen.NO_CALLEE)
 
     def test_generate_callchain_function_codeblockbodies(self):
-        self.gen._GenerateCallchainMappings()
-        self.gen._GenerateCallchainFunctions()
+        self.gen._generate_callchain_mappings()
+        self.gen._generate_callchain_functions()
         self.assertEqual(len(self.gen._functions),
                          self.depth * self.num_callchains)
 
@@ -46,7 +46,7 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
             code_block_bodies.add(func.instructions[0].code_block_body_id)
             sig_body = (
                 self.gen._code_block_bodies[func.signature.code_block_body_id])
-            self.assertIn(self.gen._FunctionName(func_id),
+            self.assertIn(self.gen.function_name(func_id),
                           sig_body.instructions)
             self.assertEqual(func.instructions[0].terminator_branch.type,
                              cfg_pb2.Branch.BranchType.FALLTHROUGH)
@@ -56,8 +56,8 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
             msg="All functions should share the same main code block body.")
 
     def test_generate_callchain_function_callees(self):
-        self.gen._GenerateCallchainMappings()
-        self.gen._GenerateCallchainFunctions()
+        self.gen._generate_callchain_mappings()
+        self.gen._generate_callchain_functions()
         # Map from a caller function to its callee in the chain.
         expected_caller2callee = {0: 1, 1: 2, 3: 4, 4: 5}
 
@@ -82,13 +82,13 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
                 self.assertEqual(len(func.instructions), 1)
 
     def test_generate_entry_function(self):
-        self.gen._GenerateCallchainMappings()
-        self.gen._GenerateCallchainFunctions()
-        self.gen._GenerateEntryFunction()
+        self.gen._generate_callchain_mappings()
+        self.gen._generate_callchain_functions()
+        self.gen._generate_entry_function()
         entry_func = self.gen._functions[self.gen._entry_function_id]
         entry_func_sig = self.gen._code_block_bodies[
             entry_func.signature.code_block_body_id]
-        self.assertIn(self.gen._FunctionName(entry_func.id),
+        self.assertIn(self.gen.function_name(entry_func.id),
                       entry_func_sig.instructions)
         self.assertEqual(len(entry_func.instructions), self.num_callchains)
         for code_block in entry_func.instructions:
@@ -102,7 +102,7 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
                              1)
 
     def test_generate_cfg(self):
-        cfg = self.gen.GenerateCFG()
+        cfg = self.gen.generate_cfg()
         # +1 accounts for the entry function.
         num_total_functions = self.depth * self.num_callchains + 1
         self.assertEqual(len(cfg.functions), num_total_functions)

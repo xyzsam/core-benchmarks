@@ -37,12 +37,13 @@ class InstPointerChaseGenerator(common.BaseGenerator):
             self._function_selector = common.PopRandomElement
         else:
             self._function_selector = function_selector
-        self._function_body = self._AddCodeBlockBody('int x = 1;\n'
-                                                     'int y = x*x + 3;\n'
-                                                     'int z = y*x + 12345;\n'
-                                                     'int w = z*z + x - y;\n')
+        self._function_body = self._add_code_block_body(
+            'int x = 1;\n'
+            'int y = x*x + 3;\n'
+            'int z = y*x + 12345;\n'
+            'int w = z*z + x - y;\n')
 
-    def _GenerateCallchainMappings(self):
+    def _generate_callchain_mappings(self):
         num_functions = self._num_callchains * self._depth
         function_list = list(range(0, num_functions))
         for _ in range(0, self._num_callchains):
@@ -60,20 +61,20 @@ class InstPointerChaseGenerator(common.BaseGenerator):
             'There should be exactly one caller2callee mapping for every '
             'function.')
 
-    def _GenerateCallchainFunctions(self):
+    def _generate_callchain_functions(self):
         # First, generate codeblocks. Each function has two: the main body, with
         # a fallthrough branch, and the call, with a return terminator branch.
 
         for caller, callee in self._caller2callee.items():
-            function = self._AddFunctionWithId(caller)
-            main_body = self._AddCodeBlock()
+            function = self._add_function_with_id(caller)
+            main_body = self._add_code_block()
             main_body.code_block_body_id = self._function_body.id
             main_body.terminator_branch.type = \
                 cfg_pb2.Branch.BranchType.FALLTHROUGH
             function.instructions.append(main_body)
 
             if callee != NO_CALLEE:
-                call_block = self._AddCodeBlock()
+                call_block = self._add_code_block()
                 # Leave the branch target unspecified for now.
                 call_block.terminator_branch.type = (
                     cfg_pb2.Branch.BranchType.DIRECT_CALL)
@@ -83,14 +84,14 @@ class InstPointerChaseGenerator(common.BaseGenerator):
                 # create another CodeBlock.
                 function.instructions.append(call_block)
 
-    def _GenerateEntryFunction(self):
-        entry_func = self._AddFunctionWithId(common.IDGenerator.Next())
+    def _generate_entry_function(self):
+        entry_func = self._add_function_with_id(common.IDGenerator.next())
         for callchain_start in self._callchain_entry_functions:
             # Get the first CodeBlock of the called function.
             called_func = self._functions[callchain_start]
             # Create a CodeBlock that just calls this function (the start of a
             # callchain), no additional CodeBlockBody required.
-            code_block = self._AddCodeBlock()
+            code_block = self._add_code_block()
             code_block.terminator_branch.type = \
                 cfg_pb2.Branch.BranchType.DIRECT_CALL
             code_block.terminator_branch.targets.append(called_func.id)
@@ -98,10 +99,10 @@ class InstPointerChaseGenerator(common.BaseGenerator):
             entry_func.instructions.append(code_block)
         self._entry_function_id = entry_func.id
 
-    def GenerateCFG(self):
-        self._GenerateCallchainMappings()
-        self._GenerateCallchainFunctions()
-        self._GenerateEntryFunction()
+    def generate_cfg(self):
+        self._generate_callchain_mappings()
+        self._generate_callchain_functions()
+        self._generate_entry_function()
         cfg_proto = cfg_pb2.CFG()
         for func in self._functions.values():
             cfg_proto.functions.append(func)
@@ -115,4 +116,4 @@ def generate_cfg(args):
     """Generate a CFG of arbitrary callchains."""
     print("Generating instruction pointer chase benchmark...")
     generator = InstPointerChaseGenerator(args.depth, args.num_callchains)
-    return generator.GenerateCFG()
+    return generator.generate_cfg()

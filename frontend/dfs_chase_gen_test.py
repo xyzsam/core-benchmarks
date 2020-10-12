@@ -16,7 +16,7 @@ class DFSChaseGenTest(unittest.TestCase):
                                                    self.branch_probability)
 
     def test_generate_function_tree(self):
-        self.gen._GenerateFunctionTree()
+        self.gen._generate_function_tree()
         # A full binary tree of depth N has 2^n-1 nodes. function_tree only
         # includes functions that call others, so the leaves in the last layer
         # of the tree are excluded. Hence the expected number of nodes is
@@ -29,7 +29,7 @@ class DFSChaseGenTest(unittest.TestCase):
     def test_generate_conditional_branch_code_blocks(self):
         callees = [2, 3]  # Function IDs.
         codeblock, ft_block, ft_block_ret, taken_block, taken_block_ret = \
-            self.gen._GenerateConditionalBranchCodeBlocks(
+            self.gen._generate_conditional_branch_code_blocks(
                 callees, self.branch_probability)
         self.assertEqual(codeblock.terminator_branch.type,
                          cfg_pb2.Branch.BranchType.CONDITIONAL_DIRECT)
@@ -51,8 +51,8 @@ class DFSChaseGenTest(unittest.TestCase):
                          cfg_pb2.Branch.BranchType.RETURN)
 
     def test_generate_functions(self):
-        self.gen._GenerateFunctionTree()
-        self.gen._GenerateFunctions()
+        self.gen._generate_function_tree()
+        self.gen._generate_functions()
         self.assertEqual(len(self.gen._functions), 2**(self.depth) - 1)
         for func_id, func in self.gen._functions.items():
             if func_id in self.gen._function_tree:
@@ -63,7 +63,7 @@ class DFSChaseGenTest(unittest.TestCase):
                 self.assertEqual(len(func.instructions), 1)
 
     def test_generate_cfg(self):
-        cfg = self.gen.GenerateCFG()
+        cfg = self.gen.generate_cfg()
         self.assertEqual(cfg.entry_point_function, self.gen._root_func)
         self.assertEqual(len(cfg.functions), len(self.gen._functions))
         for got_func in cfg.functions:
