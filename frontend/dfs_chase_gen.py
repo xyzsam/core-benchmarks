@@ -20,7 +20,6 @@ def register_args(parser):
 
 class DFSChaseGenerator(common.BaseGenerator):
     """Generates a DFS instruction pointer chase benchmark."""
-
     def __init__(self, depth, branch_probability):
         super().__init__()
 
@@ -40,9 +39,9 @@ class DFSChaseGenerator(common.BaseGenerator):
             'int w = z*z + x - y;\n')
 
     def _add_code_block_with_branch(self,
-                                branch_type,
-                                target=None,
-                                probability=None):
+                                    branch_type,
+                                    target=None,
+                                    probability=None):
         """Add an empty code block with the specified terminator branch."""
         block = self._add_code_block()
         block.terminator_branch.type = branch_type
@@ -52,7 +51,8 @@ class DFSChaseGenerator(common.BaseGenerator):
             block.terminator_branch.taken_probability.append(probability)
         return block
 
-    def _generate_conditional_branch_code_blocks(self, call_targets, probability):
+    def _generate_conditional_branch_code_blocks(self, call_targets,
+                                                 probability):
         if len(call_targets) != 2:
             raise ValueError("call_targets must have length 2, got %d" %
                              len(call_targets))
