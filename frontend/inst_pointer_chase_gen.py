@@ -25,6 +25,7 @@ NO_CALLEE = -1
 
 class InstPointerChaseGenerator(common.BaseGenerator):
     """Generates an instruction pointer chase benchmark."""
+
     def __init__(self, depth, num_callchains, function_selector=None):
         super().__init__()
         self._depth = depth

@@ -16,6 +16,7 @@ def _pop_next_function(function_list):
 
 
 class InstPointerChaseGeneratorTest(unittest.TestCase):
+
     def setUp(self):
         self.depth = 3
         self.num_callchains = 2
@@ -77,8 +78,8 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
                     (func_id, expected_callee_func.id,
                      func.instructions[1].terminator_branch.targets[0]))
                 self.assertEqual(
-                    func.instructions[1].terminator_branch.
-                    taken_probability[0], 1)
+                    func.instructions[1].terminator_branch.taken_probability[0],
+                    1)
             else:
                 self.assertEqual(len(func.instructions), 1)
 

@@ -8,6 +8,7 @@ import unittest
 
 
 class DFSChaseGenTest(unittest.TestCase):
+
     def setUp(self):
         self.depth = 3
         self.branch_probability = 0.5
