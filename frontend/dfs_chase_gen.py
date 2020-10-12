@@ -60,7 +60,7 @@ class DFSChaseGenerator(common.BaseGenerator):
     def _generate_conditional_branch_code_blocks(self, call_targets,
                                                  probability):
         if len(call_targets) != 2:
-            raise ValueError("call_targets must have length 2, got %d" %
+            raise ValueError('call_targets must have length 2, got %d' %
                              len(call_targets))
 
         # Conditional branch taken path.
@@ -127,6 +127,6 @@ class DFSChaseGenerator(common.BaseGenerator):
 
 def generate_cfg(args):
     """Generate a CFG of arbitrary callchains."""
-    print("Generating DFS instruction pointer chase benchmark...")
+    print('Generating DFS instruction pointer chase benchmark...')
     generator = DFSChaseGenerator(args.depth, args.branch_probability)
     return generator.generate_cfg()

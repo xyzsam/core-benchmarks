@@ -11,7 +11,7 @@ import inst_pointer_chase_gen
 def _pop_next_function(function_list):
     """Pops and returns the next function in the list."""
     if not function_list:
-        raise IndexError("in _pop_next_function: list of functions is empty")
+        raise IndexError('in _pop_next_function: list of functions is empty')
     return function_list.pop(0)
 
 
@@ -63,7 +63,7 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
         self.assertEqual(
             len(code_block_bodies),
             1,
-            msg="All functions should share the same main code block body.")
+            msg='All functions should share the same main code block body.')
 
     def test_generate_callchain_function_callees(self):
         self.gen._generate_callchain_mappings()
@@ -83,7 +83,7 @@ class InstPointerChaseGeneratorTest(unittest.TestCase):
                 self.assertEqual(
                     self._target_branch_for(func).targets[0],
                     expected_callee_func.id,
-                    msg="Function %d should call function %d, got %d" %
+                    msg='Function %d should call function %d, got %d' %
                     (func_id, expected_callee_func.id,
                      self._target_branch_for(func).targets[0]))
                 self.assertEqual(

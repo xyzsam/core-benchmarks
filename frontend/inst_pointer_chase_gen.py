@@ -115,6 +115,6 @@ class InstPointerChaseGenerator(common.BaseGenerator):
 
 def generate_cfg(args):
     """Generate a CFG of arbitrary callchains."""
-    print("Generating instruction pointer chase benchmark...")
+    print('Generating instruction pointer chase benchmark...')
     generator = InstPointerChaseGenerator(args.depth, args.num_callchains)
     return generator.generate_cfg()
