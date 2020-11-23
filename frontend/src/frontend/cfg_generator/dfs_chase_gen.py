@@ -62,10 +62,37 @@ class DFSChaseGenerator(common.BaseGenerator):
         self._left_path_probability: float = left_path_probability
         self._use_indirect_calls: bool = use_indirect_calls
         self._function_body: cfg_pb2.CodeBlockBody = self._add_code_block_body(
-            'int x = 1;\n'
-            'int y = x*x + 3;\n'
-            'int z = y*x + 12345;\n'
-            'int w = z*z + x - y;\n')
+            'int x=1, y=0, z=0, w=0, tmp=0;\n'
+            '#ifdef __aarch64__\n'
+            '  asm volatile (\n'
+            '      "mul %0, %0, %0\\n\\t"\n'
+            '      "mov %1, %0\\n\\t"\n'
+            '      "add %1, %1, #0x3\\n\\t"\n'
+            '      "mov %2, %1\\n\\t"\n'
+            '      "mul %2, %2, %0\\n\\t"\n'
+            '      "mov %4, #0x3039\\n\\t"\n'
+            '      "add %2, %2, %4\\n\\t"\n'
+            '      "mul %2, %2, %2\\n\\t"\n'
+            '      "add %2, %2, %0\\n\\t"\n'
+            '      "sub %2, %2, %1\\n\\t"\n'
+            '      "mov %3, %2\\n\\t"\n'
+            ': "=&r"(x), "=&r"(y), "=&r"(z), "=r"(w), "=r"(tmp)\n'
+            ': "0"(x), "1"(y), "2"(z) : );\n'
+            '#else\n'
+            '  asm volatile (\n'
+            '      "imul %0, %0\\n\\t"\n'
+            '      "mov %0, %1\\n\\t"\n'
+            '      "add $0x3, %1\\n\\t"\n'
+            '      "mov %1, %2\\n\\t"\n'
+            '      "imul %0, %2\\n\\t"\n'
+            '      "add $0x3039, %2\\n\\t"\n'
+            '      "imul %2, %2\\n\\t"\n'
+            '      "add %0, %2\\n\\t"\n'
+            '      "sub %1, %2\\n\\t"\n'
+            '      "mov %2, %3\\n\\t"\n'
+            ': "=&r"(x), "=&r"(y), "=&r"(z), "=r"(w)\n'
+            ': "0"(x), "1"(y), "2"(z) : );\n'
+            '#endif\n')
 
     def _add_code_block_with_branch(
             self,
