@@ -57,11 +57,6 @@ class InstPointerChaseGenerator(common.BaseGenerator):
                 common.pop_random_element
         else:
             self._function_selector = function_selector
-        self._function_body: cfg_pb2.CodeBlockBody = self._add_code_block_body(
-            'int x = 1;\n'
-            'int y = x*x + 3;\n'
-            'int z = y*x + 12345;\n'
-            'int w = z*z + x - y;\n')
 
     def _generate_callchain_mappings(self) -> None:
         num_functions = self._num_callchains * self._depth

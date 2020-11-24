@@ -28,6 +28,45 @@ def pop_random_element(somelist: List[Any]) -> Any:
     return somelist.pop(idx)
 
 
+# The body of every function that we will generate. It simply performs a
+# sequence of arithmetic operations. We write it in assembly to have better
+# control over what the compiler does to it.
+FUNCTION_BODY_XARCH: str = (
+            'int x=1, y=0, z=0, w=0, tmp=0;\n'
+            'for (int i = 0; i < 20; i++) {\n'
+            '#ifdef __aarch64__\n'
+            '  asm volatile (\n'
+            '      "mul %0, %0, %0\\n\\t"\n'
+            '      "mov %1, %0\\n\\t"\n'
+            '      "add %1, %1, #0x3\\n\\t"\n'
+            '      "mov %2, %1\\n\\t"\n'
+            '      "mul %2, %2, %0\\n\\t"\n'
+            '      "mov %4, #0x3039\\n\\t"\n'
+            '      "add %2, %2, %4\\n\\t"\n'
+            '      "mul %2, %2, %2\\n\\t"\n'
+            '      "add %2, %2, %0\\n\\t"\n'
+            '      "sub %2, %2, %1\\n\\t"\n'
+            '      "mov %3, %2\\n\\t"\n'
+            ': "=&r"(x), "=&r"(y), "=&r"(z), "=r"(w), "=r"(tmp)\n'
+            ': "0"(x), "1"(y), "2"(z) : );\n'
+            '#else\n'
+            '  asm volatile (\n'
+            '      "imul %0, %0\\n\\t"\n'
+            '      "mov %0, %1\\n\\t"\n'
+            '      "add $0x3, %1\\n\\t"\n'
+            '      "mov %1, %2\\n\\t"\n'
+            '      "imul %0, %2\\n\\t"\n'
+            '      "add $0x3039, %2\\n\\t"\n'
+            '      "imul %2, %2\\n\\t"\n'
+            '      "add %0, %2\\n\\t"\n'
+            '      "sub %1, %2\\n\\t"\n'
+            '      "mov %2, %3\\n\\t"\n'
+            ': "=&r"(x), "=&r"(y), "=&r"(z), "=r"(w)\n'
+            ': "0"(x), "1"(y), "2"(z) : );\n'
+            '#endif\n'
+            '}')
+
+
 class BaseGenerator(object):
     """Common functionality for generating benchmarks."""
 
@@ -38,6 +77,8 @@ class BaseGenerator(object):
         self._code_blocks: Dict[int, cfg_pb2.CodeBlock] = {}
         # Map from function ID to the function proto.
         self._functions: Dict[int, cfg_pb2.Function] = {}
+        self._function_body: cfg_pb2.CodeBlockBody = self._add_code_block_body(
+            FUNCTION_BODY_XARCH)
 
     def function_name(self, function_id: int) -> str:
         return 'function_%d' % function_id

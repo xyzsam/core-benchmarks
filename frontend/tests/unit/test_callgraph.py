@@ -64,7 +64,8 @@ def test_load_onefunction(resources):
 
 def test_print_function_onefunction(resources):
     test_file = os.path.join(resources, 'onefunction.pbtxt')
-    expected = ('void function_19() {\n'
+    expected = ('void function_19() __attribute__((noinline));\n'
+                'void function_19() {\n'
                 'label1:;\n'
                 'int x = 1;\n'
                 'int y = x*x + 3;\n'
@@ -78,7 +79,8 @@ def test_print_function_onefunction(resources):
 
 def test_print_function_onecallchain(resources):
     test_file = os.path.join(resources, 'onecallchain.pbtxt')
-    expected_2 = ('void function_2() {\n'
+    expected_2 = ('void function_2() __attribute__((noinline));\n'
+                  'void function_2() {\n'
                   'label74:;\n'
                   'int x = 1;\n'
                   'int y = x*x + 3;\n'
@@ -86,7 +88,8 @@ def test_print_function_onecallchain(resources):
                   'int w = z*z + x - y;\n'
                   'function_3();\n'
                   '}\n')
-    expected_3 = ('void function_3() {\n'
+    expected_3 = ('void function_3() __attribute__((noinline));\n'
+                  'void function_3() {\n'
                   'label71:;\n'
                   'int x = 1;\n'
                   'int y = x*x + 3;\n'
@@ -101,7 +104,8 @@ def test_print_function_onecallchain(resources):
 
 def test_format_function_prefetch_codeblock(resources):
     test_file = os.path.join(resources, 'prefetch_cb.pbtxt')
-    expected = ('void function_0() {\n'
+    expected = ('void function_0() __attribute__((noinline));\n'
+                'void function_0() {\n'
                 'label4:;\n'
                 '#ifdef ENABLE_CODE_PREFETCH\n'
                 '#ifdef __aarch64__\n'
@@ -120,7 +124,8 @@ def test_format_function_prefetch_codeblock(resources):
 def test_format_function_prefetch_codeblock_degree(resources):
     test_file = os.path.join(resources, 'prefetch_cb_degree.pbtxt')
     cfg = user_callgraph.Callgraph.from_proto(test_file)
-    expected = ('void function_0() {\n'
+    expected = ('void function_0() __attribute__((noinline));\n'
+                'void function_0() {\n'
                 'label4:;\n'
                 '#ifdef ENABLE_CODE_PREFETCH\n'
                 '#ifdef __aarch64__\n'
@@ -138,7 +143,8 @@ def test_format_function_prefetch_codeblock_degree(resources):
 
 def test_format_function_prefetch_function(resources):
     test_file = os.path.join(resources, 'prefetch_func.pbtxt')
-    expected = ('void function_0() {\n'
+    expected = ('void function_0() __attribute__((noinline));\n'
+                'void function_0() {\n'
                 'label4:;\n'
                 '#ifdef ENABLE_CODE_PREFETCH\n'
                 '#ifdef __aarch64__\n'
@@ -156,7 +162,8 @@ def test_format_function_prefetch_function(resources):
 
 def test_format_function_prefetch_function_degree(resources):
     test_file = os.path.join(resources, 'prefetch_func_degree.pbtxt')
-    expected = ('void function_0() {\n'
+    expected = ('void function_0() __attribute__((noinline));\n'
+                'void function_0() {\n'
                 'label4:;\n'
                 '#ifdef ENABLE_CODE_PREFETCH\n'
                 '#ifdef __aarch64__\n'

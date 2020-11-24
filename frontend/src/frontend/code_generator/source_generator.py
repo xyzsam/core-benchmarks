@@ -140,7 +140,8 @@ class SourceGenerator:
             prefetch_ifdef = ('ifdef ENABLE_PREFETCH\n'
                               '\tDENABLE_PREFETCH = -DENABLE_CODE_PREFETCH\n'
                               'endif\n\n')
-            cflags = ['$(DENABLE_PREFETCH)', '-O2']
+            cflags = ['$(DENABLE_PREFETCH)', '-O2',
+                      '-fno-optimize-sibling-calls']
             cflags_str = ' '.join(cflags)
             obj_files = ' '.join(dependencies.keys())
             string = (
